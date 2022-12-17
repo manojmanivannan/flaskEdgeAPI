@@ -3,3 +3,4 @@ python-dotenv
 psycopg2
 Flask-SQLAlchemy
 SQLAlchemy
+flask-restx

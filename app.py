@@ -1,20 +1,26 @@
 from datetime import datetime
-from flask import Flask, request
+from flask import Flask, request, Blueprint
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import func
 from os.path import join, abspath, dirname
 from init_db import create_table_and_load_data
+from webargs import fields
+# from flask_restx import Api, Resource
+
+
 
 
 basedir = abspath(dirname(__file__))
 
 app = Flask(__name__)
+# api = Api(app, title='EdgeAPI', description='REST API to track Temperature')
+
+
 ##### INITIALIZE DB ##########
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + join(basedir,"edgeapi.db")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-USER_ID_SEQ = db.Sequence('room_id_seq')  # define sequence explicitly
 class Rooms(db.Model):
     # Inherit the db.Model to this class.
 
@@ -44,7 +50,7 @@ class Temperatures(db.Model):
 create_table_and_load_data(app, db, Rooms, Temperatures)
 
 
-@app.get("/")
+@app.route("/")
 def index():
     return {"data":"Hello World !"}
 
@@ -114,6 +120,7 @@ def get_avg_temp_by_room_id(room_id):
             "data":{temps1[0][0]:temps1[0][1]}
         }
         return result
+
 
 
 if __name__ == '__main__':
