@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.sql import func
 from os.path import isfile, join, abspath, dirname
 
 
@@ -37,10 +38,10 @@ USER_ID_SEQ = db.Sequence('room_id_seq')  # define sequence explicitly
 class Rooms(db.Model):
     # Inherit the db.Model to this class.
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer,primary_key=True)
     room_name = db.Column(db.String(200),nullable=False, unique=True)
     date = db.Column(db.DateTime, default=datetime.utcnow)
-    room_id = db.relationship('Temperatures', backref='rooms',lazy=True)
+    room_id = db.relationship('Temperatures', backref='rooms')
 
     def __repr__(self):
         return f"<Rooms {self.room_name}>"
@@ -53,7 +54,8 @@ class Temperatures(db.Model):
     id = db.Column(db.Integer,primary_key=True)
     date = db.Column(db.DateTime, default=datetime.utcnow)
     temperature = db.Column(db.Float, nullable=False)
-    room_id = db.Column(db.String(200), db.ForeignKey('rooms.id'))
+    room_id = db.Column(db.Integer,db.ForeignKey('rooms.id'), nullable=False)
+    # room = db.relationship('Rooms', backref='temperatures')
     # room = db.relationship('Temperature',backref=db.backref("room", uselist=False))
 
 
@@ -64,6 +66,21 @@ class Temperatures(db.Model):
 with app.app_context():
     db.drop_all()
     db.create_all()
+    room1 = Rooms(room_name="hall")
+    room2 = Rooms(room_name="kitchen")
+    room3 = Rooms(room_name="pooja")
+    room4 = Rooms(room_name="bathroom")
+
+    temp1 = Temperatures(rooms=room1, temperature=17.1)
+    temp2 = Temperatures(rooms=room1, temperature=10.3)
+    temp3 = Temperatures(rooms=room2, temperature=20.5)
+    temp4 = Temperatures(rooms=room3, temperature=80.3)
+    temp5 = Temperatures(rooms=room4, temperature=33.8)
+
+    db.session.add_all([room1, room2,room3,room4])
+    db.session.add_all([temp1, temp2, temp3, temp4, temp5])
+    db.session.commit()
+
 
 
 
@@ -109,6 +126,36 @@ def get_rooms():
         for room in rooms:
             room_dict[room.id] = room.room_name
         return room_dict
+
+@app.route("/temperatures", methods=['GET'])
+def get_temperatures():
+    if request.method == "GET":
+        temps = Temperatures.query.order_by(Temperatures.date).all()
+        temp_dict={}
+        for temp in temps:
+            temp_dict[temp.id] = {
+                'id':temp.id,
+                'temperature': temp.temperature,
+                'date':temp.date
+            } 
+        return temp_dict
+
+@app.route("/avgtemp/<int:room_id>", methods=['GET'])
+def get_avg_temp_by_room_id(room_id):
+    if request.method == "GET":
+        temps1 = Temperatures.query\
+                        .with_entities(
+                            Rooms.room_name,
+                            func.avg(Temperatures.temperature).label('avg')
+                        )\
+                        .join(Rooms, Temperatures.room_id == Rooms.id)\
+                        .filter(Temperatures.room_id==room_id).all()
+        result = {
+            "room_id":room_id,
+            "data":{temps1[0][0]:temps1[0][1]}
+        }
+        return result
+
 
 if __name__ == '__main__':
     
