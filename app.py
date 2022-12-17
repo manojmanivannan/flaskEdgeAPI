@@ -1,30 +1,10 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import func
-from os.path import isfile, join, abspath, dirname
+from os.path import join, abspath, dirname
+from init_db import create_table_and_load_data
 
-
-
-# CREATE_ROOMS_TABLE = ("CREATE TABLE IF NOT EXISTS rooms (id SERIAL PRIMARY KEY, name TEXT);")
-# CREATE_TEMPS_TABLE = """CREATE TABLE IF NOT EXISTS temperatures (room_id INTEGER, temperature REAL, date TIMESTAMP, FOREIGN KEY(room_id) REFERENCES rooms(id) ON DELETE CASCADE);"""
-
-# INSERT_ROOM_RETURN_ID = "INSERT INTO rooms (name) VALUES (%s) RETURNING id;"
-# INSERT_TEMP = ("INSERT INTO temperatures (room_id, temperature, date) VALUES (%s, %s, %s);")
-
-# ROOM_NAME = """SELECT name FROM rooms WHERE id = (%s)"""
-# ROOM_NUMBER_OF_DAYS = """SELECT COUNT(DISTINCT DATE(date)) AS days FROM temperatures WHERE room_id = (%s);"""
-# ROOM_ALL_TIME_AVG = ("SELECT AVG(temperature) as average FROM temperatures WHERE room_id = (%s);")
-
-# ROOM_TERM = """SELECT DATE(temperatures.date) as reading_date,
-# AVG(temperatures.temperature)
-# FROM temperatures
-# WHERE temperatures.room_id = (%s)
-# GROUP BY reading_date
-# HAVING DATE(temperatures.date) > (SELECT MAX(DATE(temperatures.date))-(%s) FROM temperatures);"""
-
-# GLOBAL_NUMBER_OF_DAYS = ("""SELECT COUNT(DISTINCT DATE(date)) AS days FROM temperatures;""")
-# GLOBAL_AVG = """SELECT AVG(temperature) as average FROM temperatures;"""
 
 basedir = abspath(dirname(__file__))
 
@@ -55,34 +35,13 @@ class Temperatures(db.Model):
     date = db.Column(db.DateTime, default=datetime.utcnow)
     temperature = db.Column(db.Float, nullable=False)
     room_id = db.Column(db.Integer,db.ForeignKey('rooms.id'), nullable=False)
-    # room = db.relationship('Rooms', backref='temperatures')
-    # room = db.relationship('Temperature',backref=db.backref("room", uselist=False))
 
 
     def __repr__(self) -> str:
         return f"<Temperatures {self.room_id} {self.temperature}>"
 
 
-with app.app_context():
-    db.drop_all()
-    db.create_all()
-    room1 = Rooms(room_name="hall")
-    room2 = Rooms(room_name="kitchen")
-    room3 = Rooms(room_name="pooja")
-    room4 = Rooms(room_name="bathroom")
-
-    temp1 = Temperatures(rooms=room1, temperature=17.1)
-    temp2 = Temperatures(rooms=room1, temperature=10.3)
-    temp3 = Temperatures(rooms=room2, temperature=20.5)
-    temp4 = Temperatures(rooms=room3, temperature=80.3)
-    temp5 = Temperatures(rooms=room4, temperature=33.8)
-
-    db.session.add_all([room1, room2,room3,room4])
-    db.session.add_all([temp1, temp2, temp3, temp4, temp5])
-    db.session.commit()
-
-
-
+create_table_and_load_data(app, db, Rooms, Temperatures)
 
 
 @app.get("/")
