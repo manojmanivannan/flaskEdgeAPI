@@ -27,7 +27,7 @@ class Rooms(db.Model):
     id = db.Column(db.Integer,primary_key=True)
     room_name = db.Column(db.String(200),nullable=False, unique=True)
     date = db.Column(db.DateTime, default=datetime.utcnow)
-    room_id = db.relationship('Temperatures', backref='rooms')
+    room_id = db.relationship('Temperatures', cascade='all,delete' ,backref='rooms')
 
     def __repr__(self):
         return f"<Rooms {self.room_name}>"
@@ -54,6 +54,12 @@ create_table_and_load_data(app, db, Rooms, Temperatures)
 def index():
     return redirect('/rooms')
 
+@app.route("/rooms", methods=['GET'])
+def get_rooms():
+    if request.method == "GET":
+        rooms = Rooms.query.order_by(Rooms.date).all()
+        return render_template('index.html',rooms=rooms)
+
 @app.route("/room/create", methods=['POST'])
 def add_room():
     room_name = request.form['room_name']
@@ -69,28 +75,55 @@ def add_room():
     else:
         return {"message":"Does not support GET"}
 
+@app.route("/rooms/update/<int:room_id>", methods=['POST','GET'])
+def update_room(room_id):
+    room = Rooms.query.get_or_404(room_id)
+
+    if request.method == "POST":
+        room.room_name = request.form['room_name']
+
+        try:
+            db.session.commit()
+            return redirect("/rooms")
+        except Exception as e:
+            return {"message":f"Room update failed {e}"}
+    else:
+        return render_template('update_room.html',room=room)
+
+@app.route("/rooms/delete/<int:room_id>", methods=['GET'])
+def delete_room(room_id):
+    room = Rooms.query.get_or_404(room_id)
+
+    if request.method == "GET":
+
+        try:
+            db.session.delete(room)
+            db.session.commit()
+            return redirect("/rooms")
+        except Exception as e:
+            return {"message":f"Room delete failed {e}"}
+
+
 @app.route("/temperature/<string:room_id>/<float:temp>", methods=['POST'])
 def add_temp(room_id,temp):
     if request.method == "POST":
+        if temp==9999.9:
+            temp = request.form['temperature_value']
         new_temp = Temperatures(room_id=room_id,temperature=float(temp))
 
         try:
             db.session.add(new_temp)
             db.session.commit()
-            return {"message":"Temperature added"}
+            return redirect(f'/temperatures/room/{room_id}')
         except Exception as e:
             return {"message":f"Temperature add failed {e}"}
     else:
         return {"message":"Does not support GET"}
 
-@app.route("/rooms", methods=['GET'])
-def get_rooms():
-    if request.method == "GET":
-        rooms = Rooms.query.order_by(Rooms.date).all()
-        return render_template('index.html',rooms=rooms)
 
-@app.route("/temperatures", methods=['GET'])
-def get_temperatures():
+
+@app.route("/temperatures/all-rooms", methods=['GET'])
+def get_all_temperatures():
     if request.method == "GET":
         temps = Temperatures.query.order_by(Temperatures.date).all()
         temp_dict={}
@@ -101,6 +134,23 @@ def get_temperatures():
                 'date':temp.date
             } 
         return temp_dict
+
+@app.route("/temperatures/room/<int:room_id>", methods=['GET'])
+def get_room_temperatures(room_id):
+    if request.method == "GET":
+        room = Rooms.query.get_or_404(room_id)
+        temps = Temperatures.query.with_entities(Temperatures.id,Temperatures.temperature,Temperatures.date)\
+                        .join(Rooms, Temperatures.room_id == Rooms.id)\
+                        .filter(Temperatures.room_id==room_id).all()
+        # for temp in temps:
+        #     print({
+        #         'id':temp.id,
+        #         'temperature': temp.temperature,
+        #         'date':temp.date
+        #     })
+        print(temps)
+        return render_template('room_temperatures.html',room_name=room.room_name,temperatures=temps,room_id=room_id)
+
 
 @app.route("/avgtemp/<int:room_id>", methods=['GET'])
 def get_avg_temp_by_room_id(room_id):

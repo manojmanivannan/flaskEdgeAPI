@@ -25,8 +25,9 @@
                 <td>{{ room.id }}</td>
                 <td>{{ room.room_name|upper }}</td>
                 <td>
-                    <a href=""><button type="button" class="btn btn-primary">Update</button></a>
-                    <a href=""><button type="button" class="btn btn-danger">Delete</button></a>
+                    <a href="/rooms/update/{{ room.id }}" class="btn btn-primary">Update</a>
+                    <a href="/rooms/delete/{{ room.id }}" class="btn btn-danger">Delete</a>
+                    <a href="/temperatures/room/{{ room.id }}" class="btn btn-secondary">Show temperatures</a>
                 </td>
             </tr>
             {% endfor %}
