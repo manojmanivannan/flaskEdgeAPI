@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>IoT Monitor</title>
+{% endblock %}
+
+
+{% block body %}
+<div class="container-fluid">
+    <h1>Rooms</h1>
+    {% if rooms|length < 1 %}
+    <h4>No Rooms available</h4>
+    {% else %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Room</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for room in rooms %}
+            <tr>
+                <td>{{ room.id }}</td>
+                <td>{{ room.room_name }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    <div class="form"></div>
+        <form class="form" action="{{ url_for('add_room') }}" method="POST">
+            <input class="add_text_input" type="text" name="room_name" id="room_name">
+            <input class="add_btn_input" type="submit" value="Add Room">
+        </form>
+    </div>
+</div>
+{% endblock %}

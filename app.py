@@ -1,10 +1,10 @@
 from datetime import datetime
-from flask import Flask, request, Blueprint
+from flask import Flask, request, render_template, url_for, redirect
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import func
 from os.path import join, abspath, dirname
 from init_db import create_table_and_load_data
-from webargs import fields
+# from webargs import fields
 # from flask_restx import Api, Resource
 
 
@@ -52,18 +52,18 @@ create_table_and_load_data(app, db, Rooms, Temperatures)
 
 @app.route("/")
 def index():
-    return {"data":"Hello World !"}
+    return redirect('/rooms')
 
-@app.route("/room/create/<string:name>", methods=['POST'])
-def add_room(name):
-
+@app.route("/room/create", methods=['POST'])
+def add_room():
+    room_name = request.form['room_name']
     if request.method == "POST":
-        new_room = Rooms(room_name=name)
+        new_room = Rooms(room_name=room_name)
 
         try:
             db.session.add(new_room)
             db.session.commit()
-            return {"message":"Room added"}
+            return redirect("/rooms")
         except Exception as e:
             return {"message":f"Room add failed {e}"}
     else:
@@ -87,10 +87,7 @@ def add_temp(room_id,temp):
 def get_rooms():
     if request.method == "GET":
         rooms = Rooms.query.order_by(Rooms.date).all()
-        room_dict={}
-        for room in rooms:
-            room_dict[room.id] = room.room_name
-        return room_dict
+        return render_template('index.html',rooms=rooms)
 
 @app.route("/temperatures", methods=['GET'])
 def get_temperatures():
