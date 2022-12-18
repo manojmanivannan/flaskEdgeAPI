@@ -11,18 +11,23 @@
     {% if rooms|length < 1 %}
     <h4>No Rooms available</h4>
     {% else %}
-    <table class="table">
+    <table class="table styled-table">
         <thead>
             <tr>
                 <th>ID</th>
                 <th>Room</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
             {% for room in rooms %}
             <tr>
                 <td>{{ room.id }}</td>
-                <td>{{ room.room_name }}</td>
+                <td>{{ room.room_name|upper }}</td>
+                <td>
+                    <a href=""><button type="button" class="btn btn-primary">Update</button></a>
+                    <a href=""><button type="button" class="btn btn-danger">Delete</button></a>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
