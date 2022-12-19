@@ -6,6 +6,7 @@ from os.path import join, abspath, dirname
 from init_db import create_table_and_load_data
 import pandas as pd, plotly.express as px
 import plotly, json
+from flask import jsonify
 
 
 
@@ -169,6 +170,12 @@ def get_avg_temp_by_room_id(room_id):
         }
         return result
 
+########### ERROR HANDLING
+
+
+@app.errorhandler(404) 
+def invalid_route(e): 
+    return render_template('404.html')
 
 
 if __name__ == '__main__':

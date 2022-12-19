@@ -36,7 +36,7 @@
     {% endif %}
     <div class="form"></div>
         <form class="form" action="{{ url_for('add_room') }}" method="POST">
-            <input class="add_text_input" type="text" name="room_name" id="room_name">
+            <input class="add_text_input" type="text" name="room_name" id="room_name" required="required">
             <input class="add_btn_input" type="submit" value="Add Room">
         </form>
     </div>
