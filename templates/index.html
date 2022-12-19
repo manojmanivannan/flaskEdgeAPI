@@ -23,7 +23,7 @@
             {% for room in rooms %}
             <tr>
                 <td>{{ room.id }}</td>
-                <td>{{ room.room_name|upper }}</td>
+                <td>{{ room.room_name }}</td>
                 <td>
                     <a href="/rooms/update/{{ room.id }}" class="btn btn-primary">Update</a>
                     <a href="/rooms/delete/{{ room.id }}" class="btn btn-danger">Delete</a>

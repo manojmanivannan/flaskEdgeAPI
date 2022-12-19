@@ -4,8 +4,8 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import func
 from os.path import join, abspath, dirname
 from init_db import create_table_and_load_data
-# from webargs import fields
-# from flask_restx import Api, Resource
+import pandas as pd, plotly.express as px
+import plotly, json
 
 
 
@@ -140,15 +140,17 @@ def get_room_temperatures(room_id):
         temps = Temperatures.query.with_entities(Temperatures.id,Temperatures.temperature,Temperatures.date)\
                         .join(Rooms, Temperatures.room_id == Rooms.id)\
                         .filter(Temperatures.room_id==room_id).all()
-        # for temp in temps:
-        #     print({
-        #         'id':temp.id,
-        #         'temperature': temp.temperature,
-        #         'date':temp.date
-        #     })
-        date_values = [d.date.strftime("%d/%m/%Y, %H:%M:%S") for d in temps ]
+
+        date_values = [d.date.strftime("%Y-%m-%d %H:%M:%S") for d in temps ]
         temp_values = [d.temperature for d in temps]
-        return render_template('room_temperatures.html',room_name=room.room_name,temperatures=temps,room_id=room_id,date_values=date_values,temp_values=temp_values)
+
+        df = pd.DataFrame(list(zip(date_values, temp_values)),columns =['DateTime', 'Temperature'])
+        fig = px.line(df, x='DateTime', y='Temperature')
+        fig.update_layout({'plot_bgcolor':'rgba(0,0,0,0)','paper_bgcolor':'rgba(0,0,0,0)'})
+        
+        graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        
+        return render_template('room_temperatures.html',room_name=room.room_name,temperatures=temps,room_id=room_id,graphJSON=graphJSON)
 
 
 @app.route("/avgtemp/<int:room_id>", methods=['GET'])
