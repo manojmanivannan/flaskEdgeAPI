@@ -13,8 +13,6 @@ from init_db import create_table_and_load_data
 basedir = abspath(dirname(__file__))
 
 app = Flask(__name__)
-# api = Api(app, title='EdgeAPI', description='REST API to track Temperature')
-
 
 ##### INITIALIZE DB ##########
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + join(basedir,"edgeapi.db")
@@ -148,8 +146,9 @@ def get_room_temperatures(room_id):
         #         'temperature': temp.temperature,
         #         'date':temp.date
         #     })
-        print(temps)
-        return render_template('room_temperatures.html',room_name=room.room_name,temperatures=temps,room_id=room_id)
+        date_values = [d.date.strftime("%d/%m/%Y, %H:%M:%S") for d in temps ]
+        temp_values = [d.temperature for d in temps]
+        return render_template('room_temperatures.html',room_name=room.room_name,temperatures=temps,room_id=room_id,date_values=date_values,temp_values=temp_values)
 
 
 @app.route("/avgtemp/<int:room_id>", methods=['GET'])
